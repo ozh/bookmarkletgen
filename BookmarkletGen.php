@@ -3,10 +3,17 @@
 /**
  * BookmarkletGen : converts readable Javascript code into a bookmarklet link
  *
- * Example:
- * function someName( param ) { alert( "this is a string" ) }
- * will return:
- * function%20someName(param){alert("this is a string")}
+ * Features :
+ * - removes comments
+ * - compresses code, not literal strings
+ *   Example:
+ *   function someName( param ) { alert( "this is a string" ) }
+ *   will return:
+ *   function%20someName(param){alert("this is a string")}
+ * - wraps code into a self invoking function
+ *
+ * This is basically a slightly enhanced PHP port of the excellent Bookmarklet Crunchinator
+ * http://ted.mielczarek.org/code/mozilla/bookmarklet.html
  *
  */
 class BookmarkletGen {
@@ -15,6 +22,12 @@ class BookmarkletGen {
     
     private function __construct__() {}
     
+    /**
+     * Main function, calls all others
+     *
+     * @param  string $code  Javascript code to bookmarkletify
+     * @return string        Bookmarklet link
+     */
     public function crunch( $code ) {
         $out = $code = "(function() {\n" . $code . "\n})();";
 
@@ -29,17 +42,30 @@ class BookmarkletGen {
         return $out;
     }
     
-    
-    // http://stackoverflow.com/a/1734255/36850
-    private function encodeURIComponent($str) {
+    /**
+     * PHP port of Javascript function encodeURIComponent
+     *
+     * From http://stackoverflow.com/a/1734255/36850
+     *
+     * @since
+     * @param  string $str  String to encode
+     * @return string       Encoded string
+     */
+    // 
+    private function encodeURIComponent( $str ) {
         $revert = array(
             '%21'=>'!', '%2A'=>'*', '%28'=>'(', '%29'=>')',
         );
     
-        return strtr(rawurlencode($str), $revert);
+        return strtr( rawurlencode( $str ), $revert );
     }
 
-    // Kill comment lines and blocks
+    /**
+     * Kill comment lines and blocks
+     *
+     * @param  string $code  Commented Javascript code
+     * @return string        Commentless code
+     */
     private function kill_comments( $code ) {
         $code = preg_replace( '!\s*//.+$!m', '', $code );
         $code = preg_replace( '!/\*.+?\*/!sm', '', $code ); // s modifier: dot matches new lines
@@ -50,11 +76,11 @@ class BookmarkletGen {
     /**
      * Compress white space
      *
-     * @since
-     * @param string $var Stuff
-     * @return string Result
+     * Remove some extraneous spaces and make the whole script a one liner
+     *
+     * @param  string $code  Javascript code
+     * @return string        Compressed code
      */
-    
     private function compress_white_space( $code ) {
         // Tabs to space, no more than 1 consecutive space
         $code = preg_replace( '!\t!m', ' ', $code );
@@ -75,7 +101,15 @@ class BookmarkletGen {
         return $code;
     }
     
-    
+    /**
+     * Combine any consecutive strings
+     *
+     * In the case we have two consecutive quoted strings (eg: "hello" + "world"), save a couple more
+     * length and combine them
+     *
+     * @param  string $code  Javascript code
+     * @return string        Javascript code
+     */
     private function combine_strings( $code ) {
         $code = preg_replace('/"\+"/m', "", $code);
         $code = preg_replace("/'\+'/m", "", $code);
@@ -84,15 +118,15 @@ class BookmarkletGen {
     }
 
     
-    function restore_strings( $code ) {
-        foreach( $this->literal_strings as $i => $string ) {
-            $code = preg_replace( '/__' . $i . '__/', $string, $code, 1 );
-        }
-        
-        return $code;
-    }
-
-    
+    /**
+     * Replace all literal strings (eg: "hello world") with a placeholder and collect them in an array
+     *
+     * The idea is that strings cannot be trimmed or white-space optimized: take them out first before uglifying
+     * the code, then we'll reinject them back in later
+     *
+     * @param  string $code  Javascript code
+     * @return string        Javascript code with placeholders (eg "__1__") instead of literal strings
+     */
     private function replace_strings( $code ) {
         $return = "";
 
@@ -137,6 +171,20 @@ class BookmarkletGen {
         }
 
         return $return;
+    }
+    
+    /**
+     * Restore literal strings by replacing their placeholders with actual strings
+     *
+     * @param  string $code  Javascript code with placeholders
+     * @return string        Javascript code with actual strings
+     */
+    function restore_strings( $code ) {
+        foreach( $this->literal_strings as $i => $string ) {
+            $code = preg_replace( '/__' . $i . '__/', $string, $code, 1 );
+        }
+        
+        return $code;
     }
 
 }
