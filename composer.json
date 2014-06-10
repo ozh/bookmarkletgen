@@ -1,6 +1,6 @@
 {
 	"name": "ozh/bookmarkletgen",
-	"description": "A sweet XML builder",
+	"description": "PHP class to convert JS into valid bookmarklet links",
 	"keywords": ["bookmarklet", "javascript"],
 	"homepage": "https://github.com/ozh/bookmarkletgen",
 	"type": "library",
