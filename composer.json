@@ -1,7 +1,7 @@
 {
 	"name": "ozh/bookmarkletgen",
 	"description": "A sweet XML builder",
-	"keywords": ["bookmarklet, javascript"],
+	"keywords": ["bookmarklet", "javascript"],
 	"homepage": "https://github.com/ozh/bookmarkletgen",
 	"type": "library",
 	"license": "MIT",
