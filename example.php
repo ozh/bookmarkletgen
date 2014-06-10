@@ -15,6 +15,7 @@ should be killed too
 pop_it( a );       // lots of spaces before and after          
 CODE;
 
+include 'BookmarkletGen.php';
 $book = new BookmarkletGen;
 $link = $book->crunch( $javascript );
 
