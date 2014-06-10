@@ -1,0 +1,20 @@
+{
+	"name": "ozh/bookmarkletgen",
+	"description": "A sweet XML builder",
+	"keywords": ["bookmarklet, javascript"],
+	"homepage": "https://github.com/ozh/bookmarkletgen",
+	"type": "library",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Ozh",
+			"homepage": "http://ozh.org/"
+		}
+	],
+	"autoload": {
+		"psr-0": {"BookmarkletGen": ""}
+	},
+	"require": {
+     	"php": ">=5.2.4"
+	}
+}
