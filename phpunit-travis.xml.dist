@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit
+	backupGlobals="false"
+	colors="false"
+	stopOnFailure="false"
+	verbose="true"
+	bootstrap="tests/utils/bootstrap.php"
+	>
+	<testsuites>
+		<testsuite name="bookmarklets">
+			<directory suffix=".php">./tests/</directory>
+		</testsuite>
+	</testsuites>
+	<php>
+		<const name="BM_TRAVIS_TESTSUITE" value="true" />
+	</php>
+	<logging>
+		<log type="junit" target="build/logs/junit.xml" logIncompleteSkipped="false" />
+	</logging>
+</phpunit>

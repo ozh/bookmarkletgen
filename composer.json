@@ -12,7 +12,7 @@
 		}
 	],
 	"autoload": {
-		"psr-0": {"BookmarkletGen": ""}
+		"psr-0": {"BookmarkletGen": "src/"}
 	},
 	"require": {
      	"php": ">=5.2.4"

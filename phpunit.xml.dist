@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit
+	backupGlobals="false"
+	colors="false"
+	stopOnFailure="false"
+	verbose="true"
+	bootstrap="tests/utils/bootstrap.php"
+	>
+	<testsuites>
+		<testsuite name="bookmarklets">
+			<directory suffix=".php">./tests/</directory>
+		</testsuite>
+	</testsuites>
+	<php>
+		<const name="BM_TRAVIS_TESTSUITE" value="false" />
+		<const name="BM_CUSTOM_PHANTOMJS_PATH" value="false" />
+        <!--
+            if phantomjs is not in path or cannot be found with `which phantomjs`,
+            copy this file to `phpunit.xml` and replace "false" with the full
+            path to phantomjs (eg "c:/phantom/phantomjs.exe")
+        -->
+	</php>
+	<logging>
+		<log type="junit" target="build/logs/junit.xml" logIncompleteSkipped="false" />
+	</logging>
+</phpunit>
