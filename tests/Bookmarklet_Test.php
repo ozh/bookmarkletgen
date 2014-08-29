@@ -1,6 +1,6 @@
 <?php
 
-class Syntax_Tests extends PHPUnit_Framework_TestCase {
+class Syntax_Test extends PHPUnit_Framework_TestCase {
 
     function setUp() {
         $this->book    = new \BookmarkletGen;

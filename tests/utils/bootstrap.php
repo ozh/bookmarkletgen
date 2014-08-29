@@ -2,7 +2,6 @@
 /**
  * Load everything needed
  */
-require_once 'PHPUnit/Autoload.php';
 define( 'BM_ROOTDIR', str_replace( '\\', '/', dirname( dirname( __DIR__ ) ) ) );
 require_once BM_ROOTDIR . '/tests/utils/PHP_Phantom/PHP_Phantom.php';
 require_once BM_ROOTDIR . '/src/BookmarkletGen.php';
