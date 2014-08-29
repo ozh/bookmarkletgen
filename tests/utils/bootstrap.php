@@ -2,8 +2,8 @@
 /**
  * Load everything needed
  */
+require_once 'PHPUnit/Autoload.php';
 define( 'BM_ROOTDIR', str_replace( '\\', '/', dirname( dirname( __DIR__ ) ) ) );
-
 require_once BM_ROOTDIR . '/tests/utils/PHP_Phantom/PHP_Phantom.php';
 require_once BM_ROOTDIR . '/src/BookmarkletGen.php';
 
@@ -33,8 +33,6 @@ define( 'BM_TESTJS', BM_ROOTDIR . '/tests/utils/PHP_Phantom/test.js' );
 
 // Path to data dir containing JS snippets
 define( 'BM_DATA_DIR', BM_ROOTDIR . '/tests/data' );
-
-require_once 'PHPUnit/Autoload.php';
 
 // Past this point, tests will start
 
