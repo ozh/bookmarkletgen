@@ -10,7 +10,7 @@ require_once BM_ROOTDIR . '/src/BookmarkletGen.php';
 
 // In Travis? 
 if( defined( 'BM_TRAVIS_TESTSUITE' ) && BM_TRAVIS_TESTSUITE ) {
-    define( 'BM_PHANTOMJS_BIN', 'phantomjs' );
+    define( 'BM_PHANTOMJS_BIN', trim( shell_exec( 'which phantomjs' ) ) );
 
 // Not in Travis?
 } else {
