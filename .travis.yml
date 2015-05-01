@@ -8,11 +8,15 @@ php:
     - 5.6
     - 7
 
+install:
+    - composer require codeclimate/php-test-reporter --dev
+  
 script: phpunit --coverage-clover=coverage.clover --configuration ./phpunit-travis.xml.dist
 
 after_script:
     - wget https://scrutinizer-ci.com/ocular.phar
     - php ocular.phar code-coverage:upload --format=php-clover coverage.clover
+    - CODECLIMATE_REPO_TOKEN=72a0f3d421f003f4634b2942128ce1104141ab34f0ec21101c5249ff3fbaf439 ./vendor/bin/test-reporter --coverage-report=coverage.clover
 
 notifications:
   email: false
