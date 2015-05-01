@@ -11,8 +11,8 @@ php:
 script: phpunit --coverage-clover=coverage.clover --configuration ./phpunit-travis.xml.dist
 
 after-script:
-    wget https://scrutinizer-ci.com/ocular.phar
-    php ocular.phar code-coverage:upload --format=php-clover coverage.clover
+    - wget https://scrutinizer-ci.com/ocular.phar
+    - php ocular.phar code-coverage:upload --format=php-clover coverage.clover
 
 notifications:
   email: false
