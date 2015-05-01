@@ -15,7 +15,4 @@
 	<php>
 		<const name="BM_TRAVIS_TESTSUITE" value="true" />
 	</php>
-	<logging>
-		<log type="junit" target="build/logs/junit.xml" logIncompleteSkipped="false" />
-	</logging>
 </phpunit>
