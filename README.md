@@ -27,6 +27,7 @@ http://ted.mielczarek.org/code/mozilla/bookmarklet.html
 ## Example
 
 ```php
+<?php
 $javascript = <<<CODE
 var link="http://google.com/"; // destination
 window.location = link;
@@ -43,8 +44,6 @@ will print:
 ```html
 <a href="javascript:(function()%7Bvar%20link%3D%22http%3A%2F%2Fgoogle.com%2F%22%3Bwindow.location%3Dlink%3B%7D)()%3B">bookmarklet</a>
 ```
-
-Which is: <a href="javascript:(function()%7Bvar%20link%3D%22http%3A%2F%2Fgoogle.com%2F%22%3Bwindow.location%3Dlink%3B%7D)()%3B">bookmarklet</a>
 
 ## Tests
 
