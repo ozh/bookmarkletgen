@@ -128,11 +128,15 @@ class BookmarkletGen {
      * @return string        Javascript code with placeholders (eg "__1__") instead of literal strings
      */
     private function replace_strings( $code ) {
-        $return = "";
+        $return    = "";
+        $literal   = "";
+        $quoteChar = "";
+        $escaped   = false;
 
         // Split script into individual lines.
         $lines = explode("\n", $code);
-        for( $i = 0; $i < count( $lines ); $i++ ) {
+        $count = count( $lines );
+        for( $i = 0; $i < $count; $i++ ) {
 
             $j = 0;
             $inQuote = false;
@@ -179,7 +183,7 @@ class BookmarkletGen {
      * @param  string $code  Javascript code with placeholders
      * @return string        Javascript code with actual strings
      */
-    function restore_strings( $code ) {
+    private function restore_strings( $code ) {
         foreach( $this->literal_strings as $i => $string ) {
             $code = preg_replace( '/__' . $i . '__/', $string, $code, 1 );
         }
