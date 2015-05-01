@@ -29,7 +29,7 @@ class BookmarkletGen {
      * @return string        Bookmarklet link
      */
     public function crunch( $code ) {
-        $out = $code = "(function() {\n" . $code . "\n})();";
+        $out = "(function() {\n" . $code . "\n})();";
 
         $out = $this->replace_strings( $out );
         $out = $this->kill_comments( $out );
