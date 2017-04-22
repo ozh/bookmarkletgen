@@ -15,7 +15,7 @@
 // Workaround for https://github.com/ariya/phantomjs/issues/12697 on phantomjs 1.9.8
 phantomExit = function(exitCode) {
     page.close();
-    setTimeout(function() { phantom.exit(exitCode); }, 0);
+    setTimeout(function() { phantom.exit(exitCode); }, 10);
 };
 
 var system = require('system'),
