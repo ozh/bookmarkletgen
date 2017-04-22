@@ -16,6 +16,7 @@ matrix:
     - php: hhvm
 
 before_install:
+    - phantomjs --version 
     - phpenv global 5.5
     - composer require codeclimate/php-test-reporter --dev
     - phpenv global "$TRAVIS_PHP_VERSION"
