@@ -12,6 +12,11 @@
 			<directory suffix=".php">./tests/</directory>
 		</testsuite>
 	</testsuites>
+    <filter>
+        <whitelist>
+            <directory suffix=".php">./src</directory>
+        </whitelist>
+    </filter>
 	<php>
 		<const name="BM_TRAVIS_TESTSUITE" value="true" />
 	</php>
