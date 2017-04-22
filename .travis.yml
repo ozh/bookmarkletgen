@@ -1,12 +1,19 @@
-language: php
+sudo: false
 
+language: php
 php:
-    - 5.2
     - 5.3
     - 5.4
     - 5.5
     - 5.6
-    - 7
+    - 7.0
+    - 7.1
+    - hhvm
+
+matrix:
+    fast_finish: true
+    allow_failures:
+    - php: hhvm
 
 before_install:
     - phpenv global 5.5
@@ -22,4 +29,4 @@ after_script:
     - CODECLIMATE_REPO_TOKEN=72a0f3d421f003f4634b2942128ce1104141ab34f0ec21101c5249ff3fbaf439 ./vendor/bin/test-reporter --coverage-report=coverage.clover
 
 notifications:
-  email: false
+    email: false
