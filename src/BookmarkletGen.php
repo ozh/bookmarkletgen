@@ -20,8 +20,6 @@ class BookmarkletGen {
 
     private $literal_strings = array();
     
-    private function __construct__() {}
-    
     /**
      * Main function, calls all others
      *
@@ -151,8 +149,9 @@ class BookmarkletGen {
                         $quoteChar = $c;
                         $literal = $c;
                     }
-                 else
-                     $return .= $c;
+                    else {
+                        $return .= $c;
+                    }
                 }
 
                 // Already in a string, look for end and copy characters.
@@ -163,10 +162,12 @@ class BookmarkletGen {
                         $return .= "__" . count( $this->literal_strings ) . "__";
                         $this->literal_strings[ count( $this->literal_strings ) ] = $literal;
                     }
-                    else if ($c == "\\" && !$escaped)
+                    else if ($c == "\\" && !$escaped) {
                         $escaped = true;
-                    else
+                    }
+                    else {
                         $escaped = false;
+                    }
                     $literal .= $c;
                 }
                 $j++;
