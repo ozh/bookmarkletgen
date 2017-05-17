@@ -16,7 +16,7 @@ pop_it( a );       // lots of spaces before and after
 CODE;
 
 include dirname( __DIR__ ) . '/src/BookmarkletGen.php';
-$book = new BookmarkletGen;
+$book = new \Ozh\BookmarkletGen;
 $link = $book->crunch( $javascript );
 
 printf( '<a href="%s">bookmarklet</a>', $link );

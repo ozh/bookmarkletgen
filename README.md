@@ -33,7 +33,7 @@ var link="http://google.com/"; // destination
 window.location = link;
 CODE;
 
-$book = new BookmarkletGen;
+$book = new \Ozh\BookmarkletGen;
 $link = $book->crunch( $javascript );
 
 printf( '<a href="%s">bookmarklet</a>', $link );
@@ -49,12 +49,9 @@ will print:
 
 This library comes with unit tests to make sure the resulting crunched Javascript is valid code.
 
-This library requires PHP 5.2+, although it's tested from 5.3 and up. Tests are failing on HHVM because of an external binary issue (`phantomjs`) but things should work anyway on HHVM too.
+This library requires PHP 5.3. Tests are failing on HHVM because of an external binary issue (`phantomjs`) but things should work anyway on HHVM too.
 
 ## License
 
 Do whatever the hell you want to do with it
-
-
-
 
