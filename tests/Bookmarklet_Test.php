@@ -3,7 +3,7 @@
 class Syntax_Test extends PHPUnit_Framework_TestCase {
 
     function setUp() {
-        $this->book    = new \BookmarkletGen;
+        $this->book    = new \Ozh\BookmarkletGen;
         $this->phantom = new \PHP_Phantom_Test( BM_PHANTOMJS_BIN, BM_TESTJS );
     }
 

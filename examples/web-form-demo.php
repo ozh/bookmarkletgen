@@ -32,7 +32,7 @@
 
         <?php
         include dirname( __DIR__ ) . '/src/BookmarkletGen.php';
-        $book = new BookmarkletGen;
+        $book = new \Ozh\BookmarkletGen;
         $link = $book->crunch( $post );
         printf( '<p>Test your bookmarklet: <a href="%s">bookmarklet</a></p>', $link );
         ?>
