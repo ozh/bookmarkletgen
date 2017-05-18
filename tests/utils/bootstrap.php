@@ -4,7 +4,7 @@
  */
 define( 'BM_ROOTDIR', str_replace( '\\', '/', dirname( dirname( __DIR__ ) ) ) );
 require_once BM_ROOTDIR . '/tests/utils/PHP_Phantom/PHP_Phantom.php';
-require_once BM_ROOTDIR . '/src/BookmarkletGen.php';
+require_once BM_ROOTDIR . '/src/Ozh/Bookmarkletgen/Bookmarkletgen.php';
 
 // Get phantomjs path into constant PHANTOMJS_BIN
 
