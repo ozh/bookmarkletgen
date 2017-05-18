@@ -24,6 +24,20 @@ Convert readable Javascript code into bookmarklet links
 This is basically a slightly enhanced PHP port of the excellent Bookmarklet Crunchinator: 
 http://ted.mielczarek.org/code/mozilla/bookmarklet.html
 
+## Installation
+
+If you are using Composer, add this requirement to your `composer.json` file and run `composer install`:
+
+    {
+        "require": {
+            "ozh/phpass": "1.2.0"
+        }
+    }
+
+Or simply in the command line : `composer install ozh/bookmarkletgen`
+
+If you're not using composer, download the class file and include it manually.
+
 ## Example
 
 ```php
@@ -33,7 +47,10 @@ var link="http://google.com/"; // destination
 window.location = link;
 CODE;
 
-$book = new \Ozh\BookmarkletGen;
+require 'vendor/autoload.php'; // if you install using Composer
+require 'path/to/Bookmarkletgen.php'; // otherwise
+
+$book = new \Ozh\Bookmarkletgen\Bookmarkletgen;
 $link = $book->crunch( $javascript );
 
 printf( '<a href="%s">bookmarklet</a>', $link );
