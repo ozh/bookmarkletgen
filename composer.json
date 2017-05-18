@@ -5,7 +5,6 @@
 	"homepage": "https://github.com/ozh/bookmarkletgen",
 	"type": "library",
 	"license": "MIT",
-    "version": "2.4",
 	"authors": [
 		{
 			"name": "Ozh",
