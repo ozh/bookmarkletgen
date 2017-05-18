@@ -15,8 +15,8 @@ should be killed too
 pop_it( a );       // lots of spaces before and after          
 CODE;
 
-include dirname( __DIR__ ) . '/src/BookmarkletGen.php';
-$book = new \Ozh\BookmarkletGen;
+include dirname( __DIR__ ) . '/src/Ozh/Bookmarkletgen/Bookmarkletgen.php';
+$book = new \Ozh\Bookmarkletgen\Bookmarkletgen;
 $link = $book->crunch( $javascript );
 
 printf( '<a href="%s">bookmarklet</a>', $link );

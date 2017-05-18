@@ -31,8 +31,8 @@
         <hr/>
 
         <?php
-        include dirname( __DIR__ ) . '/src/BookmarkletGen.php';
-        $book = new \Ozh\BookmarkletGen;
+        include dirname( __DIR__ ) . '/src/Ozh/Bookmarkletgen/Bookmarkletgen.php';
+        $book = new \Ozh\Bookmarkletgen\Bookmarkletgen;
         $link = $book->crunch( $post );
         printf( '<p>Test your bookmarklet: <a href="%s">bookmarklet</a></p>', $link );
         ?>
