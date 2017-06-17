@@ -30,7 +30,7 @@ If you are using Composer, add this requirement to your `composer.json` file and
 
     {
         "require": {
-            "ozh/phpass": "1.2.0"
+            "ozh/bookmarkletgen": "1.2.0"
         }
     }
 
