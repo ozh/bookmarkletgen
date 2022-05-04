@@ -12,21 +12,12 @@
 			<directory suffix=".php">./tests/</directory>
 		</testsuite>
 	</testsuites>
-    <filter>
-        <whitelist>
-            <directory suffix=".php">./src</directory>
-        </whitelist>
-    </filter>
 	<php>
-		<const name="BM_TRAVIS_TESTSUITE" value="false" />
-		<const name="BM_CUSTOM_PHANTOMJS_PATH" value="false" />
+		<!-- <const name="PHANTOMJS_BIN" value="/custom/path/to/phantomjs" /> -->
         <!--
             if phantomjs is not in path or cannot be found with `which phantomjs`,
-            copy this file to `phpunit.xml` and replace "false" with the full
+            copy this file to `phpunit.xml` and replace path with the full
             path to phantomjs (eg "c:/phantom/phantomjs.exe")
         -->
 	</php>
-	<logging>
-		<log type="junit" target="build/logs/junit.xml" logIncompleteSkipped="false" />
-	</logging>
 </phpunit>

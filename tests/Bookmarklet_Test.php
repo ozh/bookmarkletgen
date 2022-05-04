@@ -1,16 +1,20 @@
 <?php
 
-class Syntax_Test extends PHPUnit_Framework_TestCase {
 
-    function setUp() {
-        $this->book    = new \Ozh\Bookmarkletgen\Bookmarkletgen;
-        $this->phantom = new \PHP_Phantom_Test( BM_PHANTOMJS_BIN, BM_TESTJS );
-    }
+use Ozh\Bookmarkletgen\Bookmarkletgen;
+
+class Syntax_Test extends PHPUnit\Framework\TestCase {
+
+    protected $book;
+    protected $phantom;
 
     /**
      * @dataProvider js_snippets
      */
 	public function test_js_snippet( $file, $is_valid ) {
+
+        $this->book    = new Bookmarkletgen;
+        $this->phantom = new \PHP_Phantom_Test( PHANTOMJS_BIN, BM_TESTJS );
     
         $javascript = file_get_contents( $file );
         
@@ -28,10 +32,13 @@ class Syntax_Test extends PHPUnit_Framework_TestCase {
             $this->assertNotEquals( '', $this->phantom->test( $link ) );
         }
 	}
-    
+
+    /**
+     * Data provider for test_js_snippet : return array of js snippets ($file, $is_valid)
+     */
     public function js_snippets() {
         $data = array();
-        
+
         $files = glob( BM_DATA_DIR . '/*.js' );
         foreach( $files as $file ) {
             $is_valid = strpos( $file, 'invalid' ) === false ? 1 : 0;
