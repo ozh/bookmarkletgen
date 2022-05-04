@@ -9,7 +9,7 @@
  *  error message otherwise
  *
  * For the record: Why not simply use NodeJS?
- * Because alert() isn't available in node, it's a a property of browser window objects.
+ * Because alert() isn't available in node, it's a property of browser window objects.
  */
 
 var system = require('system'),
@@ -42,5 +42,6 @@ phantom.onError = function(msg, trace) {
 };
 
 // Now run the real code and exit
-phantom.injectJs(to_test);
+var addfile =  phantom.injectJs(to_test);
+console.log(addfile);
 phantom.exit(0);

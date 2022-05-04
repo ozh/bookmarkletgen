@@ -27,9 +27,9 @@ class Syntax_Test extends PHPUnit\Framework\TestCase {
         
         // Check bookmarklet syntax
         if( $is_valid ) {
-            $this->assertEquals( '', $this->phantom->test( $link ) );
+            $this->assertSame( 'true', trim($this->phantom->test( $link )) );
         } else {
-            $this->assertNotEquals( '', $this->phantom->test( $link ) );
+            $this->assertNull( $this->phantom->test( $link ) );
         }
 	}
 
@@ -42,7 +42,7 @@ class Syntax_Test extends PHPUnit\Framework\TestCase {
         $files = glob( BM_DATA_DIR . '/*.js' );
         foreach( $files as $file ) {
             $is_valid = strpos( $file, 'invalid' ) === false ? 1 : 0;
-            $data[] = array( $file, $is_valid );
+            $data[basename($file)] = array( $file, $is_valid );
         }
         
         return $data;
