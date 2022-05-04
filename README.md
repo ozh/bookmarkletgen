@@ -1,4 +1,4 @@
-# Bookmarklet Gen [![](https://travis-ci.org/ozh/bookmarkletgen.svg?branch=master)](https://travis-ci.org/ozh/bookmarkletgen)
+# Bookmarklet Gen 
 
 Convert readable Javascript code into bookmarklet links
 
@@ -66,9 +66,8 @@ will print:
 
 This library comes with unit tests to make sure the resulting crunched Javascript is valid code.
 
-This library requires PHP 5.3. Tests are failing on HHVM because of an external binary issue (`phantomjs`) but things should work anyway on HHVM too.
+Current version supports PHP 7.2+ (Previous releases were tested with PHP 5.6 - 7.1)
 
 ## License
 
 Do whatever the hell you want to do with it
-

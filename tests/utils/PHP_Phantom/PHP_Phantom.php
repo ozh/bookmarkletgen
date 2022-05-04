@@ -14,9 +14,9 @@
  *  $code = "alert('some javascript code');";
  *  echo $phantom->test( $code );
  *
- * Output:
- *  nothing if no error detected
- *  error message otherwise
+ * Output with phantom 2.1.1 :
+ *  - 'true' if no error detected
+ *  - nothing if error detected
  *
  */
 class PHP_Phantom_Test {

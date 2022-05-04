@@ -1,0 +1,35 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    name: PHP
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.3', '7.4', '8.0', '8.1']
+        phpunit: [ 'latest' ]
+        include:
+          - php: '7.2'
+            phpunit: '8.5.13'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@2.18.1
+        with:
+          php-version: ${{ matrix.php }}
+          tools: phpunit:${{ matrix.phpunit }}
+
+      - name: Check phantomjs
+        run: phantomjs --version
+
+      - name: Test
+        run: phpunit --configuration phpunit.xml.dist
