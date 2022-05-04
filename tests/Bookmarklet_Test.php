@@ -9,15 +9,20 @@ class Syntax_Test extends PHPUnit\Framework\TestCase {
     protected $phantom;
 
     /**
+     * Test each javascript
+     *
      * @dataProvider js_snippets
      */
-	public function test_js_snippet( $file, $is_valid ) {
+	public function test_js_snippet( $file, $expected_output ) {
 
         $this->book    = new Bookmarkletgen;
         $this->phantom = new \PHP_Phantom_Test( PHANTOMJS_BIN, BM_TESTJS );
     
         $javascript = file_get_contents( $file );
-        
+
+        // Check original javascript
+        $this->assertSame( $expected_output, $this->phantom->test( $javascript ) );
+
         // Crunch that snippet into a bookmarklet link
         $link = $this->book->crunch( $javascript );
         
@@ -26,23 +31,19 @@ class Syntax_Test extends PHPUnit\Framework\TestCase {
         $link = rawurldecode( $link );
         
         // Check bookmarklet syntax
-        if( $is_valid ) {
-            $this->assertSame( 'true', trim($this->phantom->test( $link )) );
-        } else {
-            $this->assertNull( $this->phantom->test( $link ) );
-        }
+        $this->assertSame( $expected_output, $this->phantom->test( $link ) );
 	}
 
     /**
-     * Data provider for test_js_snippet : return array of js snippets ($file, $is_valid)
+     * Data provider for test_js_snippet : return array of js snippets ($file, $expected_output)
      */
     public function js_snippets() {
         $data = array();
 
         $files = glob( BM_DATA_DIR . '/*.js' );
         foreach( $files as $file ) {
-            $is_valid = strpos( $file, 'invalid' ) === false ? 1 : 0;
-            $data[basename($file)] = array( $file, $is_valid );
+            $expected_output = strpos( $file, 'invalid' ) === false ? "true\n" : null;
+            $data[basename($file)] = array( $file, $expected_output );
         }
         
         return $data;
