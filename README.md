@@ -1,5 +1,7 @@
 # Bookmarklet Gen 
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/dd062b0223c647d8bb297bf036343d34)](https://app.codacy.com/gh/ozh/bookmarkletgen?utm_source=github.com&utm_medium=referral&utm_content=ozh/bookmarkletgen&utm_campaign=Badge_Grade_Settings)
+
 Convert readable Javascript code into bookmarklet links
 
 ## Features
