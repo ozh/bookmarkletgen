@@ -7,11 +7,11 @@ require_once BM_ROOTDIR . '/src/Bookmarkletgen.php';
 
 // Node.js must be in the path or manually set in phpunit.xml
 if (!defined('NODEJS_BIN')) {
-    $nodejs_path = exec('which nodejs');
+    $nodejs_path = exec('which node');
     if ($nodejs_path) {
         define('NODEJS_BIN', $nodejs_path);
     } else {
-        throw new Exception('nodejs not found in path');
+        throw new Exception('node not found in path');
     }
 }
 
