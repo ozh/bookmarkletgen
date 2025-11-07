@@ -70,7 +70,7 @@ See provided examples for more details.
 
 This library comes with unit tests to make sure the resulting crunched Javascript is valid code.
 
-The current version supports PHP 8.0+ ([previous releases](https://github.com/ozh/bookmarkletgen/releases) were tested with PHP 5.3 – 7.2).
+The current version supports PHP 8.1+ ([previous releases](https://github.com/ozh/bookmarkletgen/releases) were tested with PHP 5.3 – 7.2).
 
 ## License
 
