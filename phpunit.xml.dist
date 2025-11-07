@@ -1,23 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="tests/utils/bootstrap.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnTestsThatTriggerErrors="true"
+         displayDetailsOnTestsThatTriggerNotices="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         failOnDeprecation="false"
+         failOnNotice="false"
+         failOnWarning="false">
 
-<phpunit
-	backupGlobals="false"
-	colors="false"
-	stopOnFailure="false"
-	verbose="true"
-	bootstrap="tests/utils/bootstrap.php"
-	>
-	<testsuites>
-		<testsuite name="bookmarklets">
-			<directory suffix=".php">./tests/</directory>
-		</testsuite>
-	</testsuites>
-	<php>
-		<!-- <const name="PHANTOMJS_BIN" value="/custom/path/to/phantomjs" /> -->
+    <testsuites>
+        <testsuite name="bookmarklets">
+            <directory suffix=".php">./tests/</directory>
+            <exclude>./tests/utils/</exclude>
+        </testsuite>
+    </testsuites>
+
+    <php>
+        <!-- <const name="NODEJS_BIN" value="C:/path/to/nodejs/node" /> -->
         <!--
-            if phantomjs is not in path or cannot be found with `which phantomjs`,
-            copy this file to `phpunit.xml` and replace path with the full
-            path to phantomjs (eg "c:/phantom/phantomjs.exe")
+            if Node.js is not in path or cannot be found with `which node`,
+            copy this file to `phpunit.xml` and replace the path with the full
+            path to Node.js binary (eg "c:/nodejs/node.exe")
         -->
-	</php>
+    </php>
+
+    <source>
+        <include>
+            <directory suffix=".php">./src</directory>
+        </include>
+    </source>
+
 </phpunit>

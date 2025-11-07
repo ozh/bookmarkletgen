@@ -2,22 +2,18 @@
 /**
  * Load everything needed
  */
-define( 'BM_ROOTDIR', str_replace( '\\', '/', dirname( dirname( __DIR__ ) ) ) );
-require_once BM_ROOTDIR . '/tests/utils/PHP_Phantom/PHP_Phantom.php';
-require_once BM_ROOTDIR . '/src/Ozh/Bookmarkletgen/Bookmarkletgen.php';
+define( 'BM_ROOTDIR', str_replace( '\\', '/', dirname(__DIR__, 2)) );
+require_once BM_ROOTDIR . '/src/Bookmarkletgen.php';
 
-// phantomjs in path or manually set in phpunit.xml
-if (!defined('PHANTOMJS_BIN')) {
-    $phantomjs_path = exec('which phantomjs');
-    if ($phantomjs_path) {
-        define('PHANTOMJS_BIN', $phantomjs_path);
+// Node.js must be in the path or manually set in phpunit.xml
+if (!defined('NODEJS_BIN')) {
+    $nodejs_path = exec('which node');
+    if ($nodejs_path) {
+        define('NODEJS_BIN', $nodejs_path);
     } else {
-        throw new Exception('Phantomjs not found in path');
+        throw new Exception('node not found in path');
     }
 }
-
-// Path to phantomjs Javascript testing script
-define( 'BM_TESTJS', BM_ROOTDIR . '/tests/utils/PHP_Phantom/test.js' );
 
 // Path to data dir containing JS snippets
 define( 'BM_DATA_DIR', BM_ROOTDIR . '/tests/data' );
