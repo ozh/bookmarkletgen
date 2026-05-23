@@ -17,7 +17,9 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WORKFLOW_TOKEN }}
 
       - name: Fetch PHP versions from php.watch API
         id: fetch-versions
@@ -41,50 +43,67 @@ jobs:
           ALL=$(printf "%s\n%s" "$STABLE" "$DEV" | sort -V)
           MATRIX=$(echo "$ALL" | awk "NR==1{printf \"[ '%s'\", \$0} NR>1{printf \", '%s'\", \$0} END{print \" ]\"}")
 
-          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "matrix=$MATRIX"    >> "$GITHUB_OUTPUT"
           echo "dev_version=$DEV"  >> "$GITHUB_OUTPUT"
-
-      - name: Read current matrix from test workflow
-        id: current
-        env:
-          TEST_WORKFLOW: .github/workflows/tests.yml
-        run: |
-          # Extract the php matrix line, e.g.: php: [ '8.1', '8.2', '8.3', '8.4' ]
-          MATRIX=$(grep -oP "php:\s*\[.*?\]" "$TEST_WORKFLOW" | head -1)
-          DEV=$(grep -oP "continue-on-error:.*=='([0-9]+\.[0-9]+)'" "$TEST_WORKFLOW" | grep -oP "[0-9]+\.[0-9]+" | head -1)
-
-          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
-          echo "dev_version=$DEV" >> "$GITHUB_OUTPUT"
-
-          echo "Current matrix   : $MATRIX"
-          echo "Current dev ver. : $DEV"
 
       - name: Compare and patch if needed
         id: patch
         env:
           TEST_WORKFLOW: .github/workflows/tests.yml
         run: |
-          CURRENT_MATRIX="${{ steps.current.outputs.matrix }}"
-          CURRENT_DEV="${{ steps.current.outputs.dev_version }}"
-          NEW_MATRIX="php: ${{ steps.fetch-versions.outputs.matrix }}"
+          NEW_MATRIX="${{ steps.fetch-versions.outputs.matrix }}"
           NEW_DEV="${{ steps.fetch-versions.outputs.dev_version }}"
+
+          echo "=== Current content of $TEST_WORKFLOW ==="
+          cat -n "$TEST_WORKFLOW"
+          echo "=========================================="
+
+          # The php matrix line: contains "php:" but not "matrix.php" (to avoid matching continue-on-error line)
+          MATRIX_LINE=$(grep -n "php:" "$TEST_WORKFLOW" | grep -v "matrix\.php" | head -1 | cut -d: -f1)
+
+          # The continue-on-error line referencing a PHP version: match "matrix.php =="
+          DEV_LINE=$(grep -n "matrix\.php ==" "$TEST_WORKFLOW" | head -1 | cut -d: -f1)
+
+          echo "Matrix line number      : $MATRIX_LINE"
+          echo "continue-on-error line  : $DEV_LINE"
+
+          if [ -z "$MATRIX_LINE" ]; then
+            echo "ERROR: could not find php matrix line in $TEST_WORKFLOW" >&2
+            exit 1
+          fi
+
+          CURRENT_MATRIX_LINE=$(sed -n "${MATRIX_LINE}p" "$TEST_WORKFLOW")
+          CURRENT_BRACKET=$(echo "$CURRENT_MATRIX_LINE" | grep -oP "\[.*\]")
+          INDENT=$(echo "$CURRENT_MATRIX_LINE" | grep -oP "^\s*")
+
+          echo "Current matrix line     : $CURRENT_MATRIX_LINE"
+          echo "Current bracket content : $CURRENT_BRACKET"
 
           CHANGED=false
 
-          if [ "$CURRENT_MATRIX" != "$NEW_MATRIX" ]; then
-            echo "Matrix changed: $CURRENT_MATRIX -> $NEW_MATRIX"
-            sed -i "s|$CURRENT_MATRIX|$NEW_MATRIX|" "$TEST_WORKFLOW"
+          if [ "$CURRENT_BRACKET" != "$NEW_MATRIX" ]; then
+            echo "Updating matrix on line $MATRIX_LINE"
+            sed -i "${MATRIX_LINE}s|.*|${INDENT}php: ${NEW_MATRIX}|" "$TEST_WORKFLOW"
             CHANGED=true
+          else
+            echo "Matrix is already up to date"
           fi
 
-          if [ "$CURRENT_DEV" != "$NEW_DEV" ]; then
-            echo "Dev version changed: $CURRENT_DEV -> $NEW_DEV"
-            sed -i "s|matrix.php == '$CURRENT_DEV'|matrix.php == '$NEW_DEV'|g" "$TEST_WORKFLOW"
-            CHANGED=true
-          fi
+          if [ -n "$DEV_LINE" ]; then
+            CURRENT_DEV_LINE=$(sed -n "${DEV_LINE}p" "$TEST_WORKFLOW")
+            CURRENT_DEV=$(echo "$CURRENT_DEV_LINE" | grep -oP "matrix\.php == '[0-9]+\.[0-9]+'" | grep -oP "[0-9]+\.[0-9]+")
+            DEV_INDENT=$(echo "$CURRENT_DEV_LINE" | grep -oP "^\s*")
+            echo "Current dev version     : $CURRENT_DEV"
 
-          if [ "$CHANGED" = "false" ]; then
-            echo "Everything is already up to date."
+            if [ -n "$NEW_DEV" ] && [ "$CURRENT_DEV" != "$NEW_DEV" ]; then
+              echo "Updating dev version on line $DEV_LINE"
+              sed -i "${DEV_LINE}s|.*|${DEV_INDENT}continue-on-error: \${{ matrix.php == '${NEW_DEV}' }}|" "$TEST_WORKFLOW"
+              CHANGED=true
+            else
+              echo "Dev version is already up to date"
+            fi
+          else
+            echo "No continue-on-error line found, skipping dev version update"
           fi
 
           echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
@@ -92,22 +111,24 @@ jobs:
       - name: Create pull request
         if: steps.patch.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
           NEW_MATRIX: ${{ steps.fetch-versions.outputs.matrix }}
           NEW_DEV: ${{ steps.fetch-versions.outputs.dev_version }}
         run: |
           BRANCH="chore/update-php-versions-$(date +%Y%m%d)"
 
-          git config user.name  "ozh[bot]"
-          git config user.email "ozh[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git checkout -b "$BRANCH"
           git add .github/workflows/tests.yml
           git commit -m "chore: update PHP test matrix to $NEW_MATRIX"
+
+          git remote set-url origin https://x-access-token:${{ secrets.WORKFLOW_TOKEN }}@github.com/${{ github.repository }}
           git push origin "$BRANCH"
 
           PR_URL=$(gh pr create \
-            --title "Update PHP test matrix to $NEW_MATRIX" \
+            --title "chore: update PHP test matrix to $NEW_MATRIX" \
             --body "Automated update of the PHP version matrix in the test workflow.
 
           **New matrix:** \`$NEW_MATRIX\`
@@ -116,7 +137,7 @@ jobs:
           Sources: [php.watch API](https://php.watch/api#versions)
 
           This PR was created automatically and will merge itself once all CI checks pass." \
-            --base main \
+            --base "$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)" \
             --head "$BRANCH" \
             --label "dependencies")
 
