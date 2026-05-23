@@ -1,0 +1,126 @@
+name: Update PHP versions in test matrix
+
+on:
+  schedule:
+    # Runs on the 1st of each month at 08:00 UTC
+    - cron: '0 8 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-php-versions:
+    name: Check and update PHP versions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch PHP versions from php.watch API
+        id: fetch-versions
+        run: |
+          RESPONSE=$(curl -sf "https://php.watch/api/v1/versions" || { echo "Failed to fetch php.watch API" >&2; exit 1; })
+
+          # Stable supported versions (not EOL, not a future/dev version)
+          STABLE=$(echo "$RESPONSE" \
+            | jq -r '.data[] | select(.isEOLVersion == false and .isFutureVersion == false) | .name' \
+            | sort -V)
+
+          # Next/dev version (isFutureVersion == true), take the highest one
+          DEV=$(echo "$RESPONSE" \
+            | jq -r '.data[] | select(.isFutureVersion == true) | .name' \
+            | sort -V | tail -1)
+
+          echo "Stable versions: $STABLE"
+          echo "Dev version: $DEV"
+
+          # Build the matrix list: stable versions + dev version at the end
+          ALL=$(printf "%s\n%s" "$STABLE" "$DEV" | sort -V)
+          MATRIX=$(echo "$ALL" | awk "NR==1{printf \"[ '%s'\", \$0} NR>1{printf \", '%s'\", \$0} END{print \" ]\"}")
+
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "dev_version=$DEV"  >> "$GITHUB_OUTPUT"
+
+      - name: Read current matrix from test workflow
+        id: current
+        env:
+          TEST_WORKFLOW: .github/workflows/tests.yml
+        run: |
+          # Extract the php matrix line, e.g.: php: [ '8.1', '8.2', '8.3', '8.4' ]
+          MATRIX=$(grep -oP "php:\s*\[.*?\]" "$TEST_WORKFLOW" | head -1)
+          DEV=$(grep -oP "continue-on-error:.*=='([0-9]+\.[0-9]+)'" "$TEST_WORKFLOW" | grep -oP "[0-9]+\.[0-9]+" | head -1)
+
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "dev_version=$DEV" >> "$GITHUB_OUTPUT"
+
+          echo "Current matrix   : $MATRIX"
+          echo "Current dev ver. : $DEV"
+
+      - name: Compare and patch if needed
+        id: patch
+        env:
+          TEST_WORKFLOW: .github/workflows/tests.yml
+        run: |
+          CURRENT_MATRIX="${{ steps.current.outputs.matrix }}"
+          CURRENT_DEV="${{ steps.current.outputs.dev_version }}"
+          NEW_MATRIX="php: ${{ steps.fetch-versions.outputs.matrix }}"
+          NEW_DEV="${{ steps.fetch-versions.outputs.dev_version }}"
+
+          CHANGED=false
+
+          if [ "$CURRENT_MATRIX" != "$NEW_MATRIX" ]; then
+            echo "Matrix changed: $CURRENT_MATRIX -> $NEW_MATRIX"
+            sed -i "s|$CURRENT_MATRIX|$NEW_MATRIX|" "$TEST_WORKFLOW"
+            CHANGED=true
+          fi
+
+          if [ "$CURRENT_DEV" != "$NEW_DEV" ]; then
+            echo "Dev version changed: $CURRENT_DEV -> $NEW_DEV"
+            sed -i "s|matrix.php == '$CURRENT_DEV'|matrix.php == '$NEW_DEV'|g" "$TEST_WORKFLOW"
+            CHANGED=true
+          fi
+
+          if [ "$CHANGED" = "false" ]; then
+            echo "Everything is already up to date."
+          fi
+
+          echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
+
+      - name: Create pull request
+        if: steps.patch.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_MATRIX: ${{ steps.fetch-versions.outputs.matrix }}
+          NEW_DEV: ${{ steps.fetch-versions.outputs.dev_version }}
+        run: |
+          BRANCH="chore/update-php-versions-$(date +%Y%m%d)"
+
+          git config user.name  "ozh[bot]"
+          git config user.email "ozh[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add .github/workflows/tests.yml
+          git commit -m "chore: update PHP test matrix to $NEW_MATRIX"
+          git push origin "$BRANCH"
+
+          PR_URL=$(gh pr create \
+            --title "Update PHP test matrix to $NEW_MATRIX" \
+            --body "Automated update of the PHP version matrix in the test workflow.
+
+          **New matrix:** \`$NEW_MATRIX\`
+          **Dev/next version (continue-on-error):** \`$NEW_DEV\`
+
+          Sources: [php.watch API](https://php.watch/api#versions)
+
+          This PR was created automatically and will merge itself once all CI checks pass." \
+            --base main \
+            --head "$BRANCH" \
+            --label "dependencies")
+
+          echo "PR created: $PR_URL"
+
+          # Enable auto-merge (squash); the PR merges as soon as required checks pass
+          gh pr merge "$PR_URL" --auto --squash
