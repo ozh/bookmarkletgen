@@ -104,8 +104,9 @@ jobs:
             fi
           elif [ -n "$NEW_DEV" ]; then
             echo "No continue-on-error line found, inserting after php matrix line $MATRIX_LINE"
-            # Use same indentation as the php: line
-            sed -i "${MATRIX_LINE}a\\${INDENT}continue-on-error: \${{ matrix.php == '${NEW_DEV}' }}" "$TEST_WORKFLOW"
+            # Write to a temp file to avoid shell/${{ }} interpolation issues
+            printf '%scontinue-on-error: ${{ matrix.php == \'%s\' }}\n' "$INDENT" "$NEW_DEV" > /tmp/coe_line.txt
+            sed -i "${MATRIX_LINE}r /tmp/coe_line.txt" "$TEST_WORKFLOW"
             CHANGED=true
           fi
 
