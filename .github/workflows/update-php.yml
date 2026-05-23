@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Fetch PHP versions from php.watch API
         id: fetch-versions
@@ -41,45 +41,46 @@ jobs:
           ALL=$(printf "%s\n%s" "$STABLE" "$DEV" | sort -V)
           MATRIX=$(echo "$ALL" | awk "NR==1{printf \"[ '%s'\", \$0} NR>1{printf \", '%s'\", \$0} END{print \" ]\"}")
 
-          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
-          echo "dev_version=$DEV"  >> "$GITHUB_OUTPUT"
-
-      - name: Read current matrix from test workflow
-        id: current
-        env:
-          TEST_WORKFLOW: .github/workflows/tests.yml
-        run: |
-          # Extract the php matrix line, e.g.: php: [ '8.1', '8.2', '8.3', '8.4' ]
-          MATRIX=$(grep -oP "php:\s*\[.*?\]" "$TEST_WORKFLOW" | head -1)
-          DEV=$(grep -oP "continue-on-error:.*=='([0-9]+\.[0-9]+)'" "$TEST_WORKFLOW" | grep -oP "[0-9]+\.[0-9]+" | head -1)
-
-          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
-          echo "dev_version=$DEV" >> "$GITHUB_OUTPUT"
-
-          echo "Current matrix   : $MATRIX"
-          echo "Current dev ver. : $DEV"
+          echo "matrix=$MATRIX"       >> "$GITHUB_OUTPUT"
+          echo "dev_version=$DEV"     >> "$GITHUB_OUTPUT"
 
       - name: Compare and patch if needed
         id: patch
         env:
           TEST_WORKFLOW: .github/workflows/tests.yml
         run: |
-          CURRENT_MATRIX="${{ steps.current.outputs.matrix }}"
-          CURRENT_DEV="${{ steps.current.outputs.dev_version }}"
-          NEW_MATRIX="php: ${{ steps.fetch-versions.outputs.matrix }}"
+          NEW_MATRIX="${{ steps.fetch-versions.outputs.matrix }}"
           NEW_DEV="${{ steps.fetch-versions.outputs.dev_version }}"
+
+          # Read the line numbers so we can replace without relying on exact string match
+          MATRIX_LINE=$(grep -n "php:" "$TEST_WORKFLOW" | grep -v "matrix\.php" | head -1 | cut -d: -f1)
+          DEV_LINE=$(grep -n "continue-on-error" "$TEST_WORKFLOW" | head -1 | cut -d: -f1)
+
+          CURRENT_MATRIX=$(sed -n "${MATRIX_LINE}p" "$TEST_WORKFLOW")
+          CURRENT_DEV=$(sed -n "${DEV_LINE}p" "$TEST_WORKFLOW" | grep -oP "[0-9]+\.[0-9]+" | head -1)
+
+          echo "Current matrix line  : $CURRENT_MATRIX"
+          echo "Current dev version  : $CURRENT_DEV"
+          echo "New matrix           : $NEW_MATRIX"
+          echo "New dev version      : $NEW_DEV"
 
           CHANGED=false
 
-          if [ "$CURRENT_MATRIX" != "$NEW_MATRIX" ]; then
-            echo "Matrix changed: $CURRENT_MATRIX -> $NEW_MATRIX"
-            sed -i "s|$CURRENT_MATRIX|$NEW_MATRIX|" "$TEST_WORKFLOW"
+          # Extract just the bracket part from the current line to compare
+          CURRENT_BRACKET=$(echo "$CURRENT_MATRIX" | grep -oP "\[.*\]")
+          if [ "$CURRENT_BRACKET" != "$NEW_MATRIX" ]; then
+            echo "Updating matrix on line $MATRIX_LINE"
+            # Preserve leading whitespace, replace everything after "php: "
+            INDENT=$(echo "$CURRENT_MATRIX" | grep -oP "^\s*")
+            sed -i "${MATRIX_LINE}s|.*|${INDENT}php: ${NEW_MATRIX}|" "$TEST_WORKFLOW"
             CHANGED=true
           fi
 
-          if [ "$CURRENT_DEV" != "$NEW_DEV" ]; then
-            echo "Dev version changed: $CURRENT_DEV -> $NEW_DEV"
-            sed -i "s|matrix.php == '$CURRENT_DEV'|matrix.php == '$NEW_DEV'|g" "$TEST_WORKFLOW"
+          if [ -n "$NEW_DEV" ] && [ "$CURRENT_DEV" != "$NEW_DEV" ]; then
+            echo "Updating dev version on line $DEV_LINE"
+            CURRENT_LINE=$(sed -n "${DEV_LINE}p" "$TEST_WORKFLOW")
+            INDENT=$(echo "$CURRENT_LINE" | grep -oP "^\s*")
+            sed -i "${DEV_LINE}s|.*|${INDENT}continue-on-error: \${{ matrix.php == '${NEW_DEV}' }}|" "$TEST_WORKFLOW"
             CHANGED=true
           fi
 
@@ -98,8 +99,8 @@ jobs:
         run: |
           BRANCH="chore/update-php-versions-$(date +%Y%m%d)"
 
-          git config user.name  "ozh[bot]"
-          git config user.email "ozh[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git checkout -b "$BRANCH"
           git add .github/workflows/tests.yml
@@ -107,7 +108,7 @@ jobs:
           git push origin "$BRANCH"
 
           PR_URL=$(gh pr create \
-            --title "Update PHP test matrix to $NEW_MATRIX" \
+            --title "chore: update PHP test matrix to $NEW_MATRIX" \
             --body "Automated update of the PHP version matrix in the test workflow.
 
           **New matrix:** \`$NEW_MATRIX\`
