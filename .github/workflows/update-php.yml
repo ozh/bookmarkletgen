@@ -105,8 +105,11 @@ jobs:
           elif [ -n "$NEW_DEV" ]; then
             echo "No continue-on-error line found, inserting after php matrix line $MATRIX_LINE"
             # Write to a temp file to avoid shell/${{ }} interpolation issues
-            printf '%scontinue-on-error: ${{ matrix.php == \'%s\' }}\n' "$INDENT" "$NEW_DEV" > /tmp/coe_line.txt
-            sed -i "${MATRIX_LINE}r /tmp/coe_line.txt" "$TEST_WORKFLOW"
+            # Build the line by concatenating parts so ${{ }} never appears literally in this YAML
+            EXPR_OPEN='${{'
+            EXPR_CLOSE='}}'
+            COE="${INDENT}continue-on-error: ${EXPR_OPEN} matrix.php == '${NEW_DEV}' ${EXPR_CLOSE}"
+            sed -i "${MATRIX_LINE}a\\ ${COE}" "$TEST_WORKFLOW"
             CHANGED=true
           fi
 
