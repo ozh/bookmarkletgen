@@ -102,8 +102,11 @@ jobs:
             else
               echo "Dev version is already up to date"
             fi
-          else
-            echo "No continue-on-error line found, skipping dev version update"
+          elif [ -n "$NEW_DEV" ]; then
+            echo "No continue-on-error line found, inserting after php matrix line $MATRIX_LINE"
+            # Use same indentation as the php: line
+            sed -i "${MATRIX_LINE}a\\${INDENT}continue-on-error: \${{ matrix.php == '${NEW_DEV}' }}" "$TEST_WORKFLOW"
+            CHANGED=true
           fi
 
           echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
