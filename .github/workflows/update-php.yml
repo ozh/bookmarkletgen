@@ -137,7 +137,7 @@ jobs:
           Sources: [php.watch API](https://php.watch/api#versions)
 
           This PR was created automatically and will merge itself once all CI checks pass." \
-            --base main \
+            --base "$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)" \
             --head "$BRANCH" \
             --label "dependencies")
 
