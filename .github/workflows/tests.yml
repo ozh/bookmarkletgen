@@ -16,6 +16,7 @@ jobs:
       matrix:
         php: [ '8.2', '8.3', '8.4', '8.5', '8.6' ]
         continue-on-error: alse
+        continue-on-error: alse
         
     steps:
       - uses: actions/checkout@v6
