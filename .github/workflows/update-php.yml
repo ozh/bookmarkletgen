@@ -108,11 +108,9 @@ jobs:
               echo "Dev version is already up to date"
             fi
           elif [ -n "$NEW_DEV" ]; then
-            echo "Inserting continue-on-error after line $MATRIX_LINE"
-            OPEN=$(printf '\x24\x7b\x7b')
-            CLOSE=$(printf '\x7d\x7d')
-            EXPR="${OPEN} matrix.php == '${NEW_DEV}' ${CLOSE}"
-            sed -i "${MATRIX_LINE}a\\${INDENT}continue-on-error: ${EXPR}" "$TEST_WORKFLOW"
+            echo "No continue-on-error line found, inserting after php matrix line $MATRIX_LINE"
+            # Use same indentation as the php: line
+            sed -i "${MATRIX_LINE}a\\${INDENT}continue-on-error: \${{ matrix.php == '${NEW_DEV}' }}" "$TEST_WORKFLOW"
             CHANGED=true
           fi
 
