@@ -97,19 +97,19 @@ jobs:
 
             if [ -n "$NEW_DEV" ] && [ "$CURRENT_DEV" != "$NEW_DEV" ]; then
               echo "Updating dev version on line $DEV_LINE"
-              sed -i "${DEV_LINE}s|.*|${DEV_INDENT}continue-on-error: \${{ matrix.php == '${NEW_DEV}' }}|" "$TEST_WORKFLOW"
+              # Use printf hex escapes to build ${{ }} so the sequence never appears literally in this YAML
+              EXPR=$(printf '\x24\x7b\x7b matrix.php == '\''%s'\'' \x7d\x7d' "$NEW_DEV")
+              sed -i "${DEV_LINE}s|.*|${DEV_INDENT}continue-on-error: ${EXPR}|" "$TEST_WORKFLOW" 
               CHANGED=true
             else
               echo "Dev version is already up to date"
             fi
           elif [ -n "$NEW_DEV" ]; then
             echo "No continue-on-error line found, inserting after php matrix line $MATRIX_LINE"
-            # Write to a temp file to avoid shell/${{ }} interpolation issues
-            # Build the line by concatenating parts so ${{ }} never appears literally in this YAML
-            EXPR_OPEN='${{'
-            EXPR_CLOSE='}}'
-            COE="${INDENT}continue-on-error: ${EXPR_OPEN} matrix.php == '${NEW_DEV}' ${EXPR_CLOSE}"
-            sed -i "${MATRIX_LINE}a\\ ${COE}" "$TEST_WORKFLOW"
+            # Use printf hex escapes to build ${{ }} so the sequence never appears literally in this YAML
+            EXPR=$(printf '\x24\x7b\x7b matrix.php == '\''%s'\'' \x7d\x7d' "$NEW_DEV")
+            COE="${INDENT}continue-on-error: ${EXPR}"
+            sed -i "${MATRIX_LINE}a\\${COE}" "$TEST_WORKFLOW"
             CHANGED=true
           fi
 
