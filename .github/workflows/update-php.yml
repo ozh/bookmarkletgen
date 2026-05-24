@@ -17,12 +17,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
 
       - name: Fetch PHP versions from php.watch API
-        id: fetch-versions
+        id: fetch
         run: |
           RESPONSE=$(curl -sf "https://php.watch/api/v1/versions" || { echo "Failed to fetch php.watch API" >&2; exit 1; })
 
@@ -39,33 +39,32 @@ jobs:
           echo "Stable versions: $STABLE"
           echo "Dev version: $DEV"
 
-          # Build the matrix list: stable versions + dev version at the end
+          # Build the matrix list: stable + dev at the end
           ALL=$(printf "%s\n%s" "$STABLE" "$DEV" | sort -V)
           MATRIX=$(echo "$ALL" | awk "NR==1{printf \"[ '%s'\", \$0} NR>1{printf \", '%s'\", \$0} END{print \" ]\"}")
 
-          echo "matrix=$MATRIX"    >> "$GITHUB_OUTPUT"
-          echo "dev_version=$DEV"  >> "$GITHUB_OUTPUT"
+          echo "matrix=$MATRIX"   >> "$GITHUB_OUTPUT"
+          echo "dev=$DEV"         >> "$GITHUB_OUTPUT"
 
       - name: Compare and patch if needed
         id: patch
         env:
           TEST_WORKFLOW: .github/workflows/tests.yml
+          NEW_MATRIX: ${{ steps.fetch.outputs.matrix }}
+          NEW_DEV: ${{ steps.fetch.outputs.dev }}
         run: |
-          NEW_MATRIX="${{ steps.fetch-versions.outputs.matrix }}"
-          NEW_DEV="${{ steps.fetch-versions.outputs.dev_version }}"
-
           echo "=== Current content of $TEST_WORKFLOW ==="
           cat -n "$TEST_WORKFLOW"
           echo "=========================================="
 
-          # The php matrix line: contains "php:" but not "matrix.php" (to avoid matching continue-on-error line)
+          # Find the php matrix line (exclude lines referencing matrix.php)
           MATRIX_LINE=$(grep -n "php:" "$TEST_WORKFLOW" | grep -v "matrix\.php" | head -1 | cut -d: -f1)
 
-          # The continue-on-error line referencing a PHP version: match "matrix.php =="
+          # Find the continue-on-error line (references matrix.php ==)
           DEV_LINE=$(grep -n "matrix\.php ==" "$TEST_WORKFLOW" | head -1 | cut -d: -f1)
 
-          echo "Matrix line number      : $MATRIX_LINE"
-          echo "continue-on-error line  : $DEV_LINE"
+          echo "Matrix line number     : $MATRIX_LINE"
+          echo "continue-on-error line : $DEV_LINE"
 
           if [ -z "$MATRIX_LINE" ]; then
             echo "ERROR: could not find php matrix line in $TEST_WORKFLOW" >&2
@@ -76,11 +75,12 @@ jobs:
           CURRENT_BRACKET=$(echo "$CURRENT_MATRIX_LINE" | grep -oP "\[.*\]")
           INDENT=$(echo "$CURRENT_MATRIX_LINE" | grep -oP "^\s*")
 
-          echo "Current matrix line     : $CURRENT_MATRIX_LINE"
           echo "Current bracket content : $CURRENT_BRACKET"
+          echo "New matrix              : $NEW_MATRIX"
 
           CHANGED=false
 
+          # Update php matrix line if needed
           if [ "$CURRENT_BRACKET" != "$NEW_MATRIX" ]; then
             echo "Updating matrix on line $MATRIX_LINE"
             sed -i "${MATRIX_LINE}s|.*|${INDENT}php: ${NEW_MATRIX}|" "$TEST_WORKFLOW"
@@ -89,27 +89,30 @@ jobs:
             echo "Matrix is already up to date"
           fi
 
+          # Update or insert continue-on-error line
           if [ -n "$DEV_LINE" ]; then
             CURRENT_DEV_LINE=$(sed -n "${DEV_LINE}p" "$TEST_WORKFLOW")
             CURRENT_DEV=$(echo "$CURRENT_DEV_LINE" | grep -oP "matrix\.php == '[0-9]+\.[0-9]+'" | grep -oP "[0-9]+\.[0-9]+")
             DEV_INDENT=$(echo "$CURRENT_DEV_LINE" | grep -oP "^\s*")
-            echo "Current dev version     : $CURRENT_DEV"
+            echo "Current dev version : $CURRENT_DEV"
 
-            if [ -n "$NEW_DEV" ] && [ "$CURRENT_DEV" != "$NEW_DEV" ]; then
-              echo "Updating dev version on line $DEV_LINE"
-              # Use printf hex escapes to build ${{ }} so the sequence never appears literally in this YAML
-              EXPR=$(printf '\x24\x7b\x7b matrix.php == '\''%s'\'' \x7d\x7d' "$NEW_DEV")
-              sed -i "${DEV_LINE}s|.*|${DEV_INDENT}continue-on-error: ${EXPR}|" "$TEST_WORKFLOW" 
+            if [ "$CURRENT_DEV" != "$NEW_DEV" ]; then
+              echo "Updating continue-on-error on line $DEV_LINE"
+              # Build the expression string from parts to avoid writing dollar-brace-brace literally
+              OPEN=$(printf '\x24\x7b\x7b')
+              CLOSE=$(printf '\x7d\x7d')
+              EXPR="${OPEN} matrix.php == '${NEW_DEV}' ${CLOSE}"
+              sed -i "${DEV_LINE}s|.*|${DEV_INDENT}continue-on-error: ${EXPR}|" "$TEST_WORKFLOW"
               CHANGED=true
             else
               echo "Dev version is already up to date"
             fi
           elif [ -n "$NEW_DEV" ]; then
-            echo "No continue-on-error line found, inserting after php matrix line $MATRIX_LINE"
-            # Use printf hex escapes to build ${{ }} so the sequence never appears literally in this YAML
-            EXPR=$(printf '\x24\x7b\x7b matrix.php == '\''%s'\'' \x7d\x7d' "$NEW_DEV")
-            COE="${INDENT}continue-on-error: ${EXPR}"
-            sed -i "${MATRIX_LINE}a\\${COE}" "$TEST_WORKFLOW"
+            echo "Inserting continue-on-error after line $MATRIX_LINE"
+            OPEN=$(printf '\x24\x7b\x7b')
+            CLOSE=$(printf '\x7d\x7d')
+            EXPR="${OPEN} matrix.php == '${NEW_DEV}' ${CLOSE}"
+            sed -i "${MATRIX_LINE}a\\${INDENT}continue-on-error: ${EXPR}" "$TEST_WORKFLOW"
             CHANGED=true
           fi
 
@@ -119,8 +122,9 @@ jobs:
         if: steps.patch.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
-          NEW_MATRIX: ${{ steps.fetch-versions.outputs.matrix }}
-          NEW_DEV: ${{ steps.fetch-versions.outputs.dev_version }}
+          NEW_MATRIX: ${{ steps.fetch.outputs.matrix }}
+          NEW_DEV: ${{ steps.fetch.outputs.dev }}
+          GH_REPO: ${{ github.repository }}
         run: |
           BRANCH="chore/update-php-versions-$(date +%Y%m%d)"
 
@@ -131,8 +135,10 @@ jobs:
           git add .github/workflows/tests.yml
           git commit -m "chore: update PHP test matrix to $NEW_MATRIX"
 
-          git remote set-url origin https://x-access-token:${{ secrets.WORKFLOW_TOKEN }}@github.com/${{ github.repository }}
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GH_REPO}"
           git push origin "$BRANCH"
+
+          DEFAULT_BRANCH=$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)
 
           PR_URL=$(gh pr create \
             --title "chore: update PHP test matrix to $NEW_MATRIX" \
@@ -144,11 +150,11 @@ jobs:
           Sources: [php.watch API](https://php.watch/api#versions)
 
           This PR was created automatically and will merge itself once all CI checks pass." \
-            --base "$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)" \
+            --base "$DEFAULT_BRANCH" \
             --head "$BRANCH" \
             --label "dependencies")
 
           echo "PR created: $PR_URL"
 
-          # Enable auto-merge (squash); the PR merges as soon as required checks pass
+          # Enable auto-merge; the PR merges as soon as required checks pass
           gh pr merge "$PR_URL" --auto --squash
